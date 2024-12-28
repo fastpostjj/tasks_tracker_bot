@@ -1,2 +1,3 @@
-# tasks_tracker_bot
-Tasks tracker bot
+# Tasks tracker bot
+Телеграм-бот трекер задач
+
