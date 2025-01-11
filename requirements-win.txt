@@ -5,11 +5,11 @@ django_celery_beat
 telebot
 psycopg
 python-dotenv
-eventlet
 
 requests
 djangorestframework
-python-dotenv
+eventlet
+
 django-cors-headers
 drf_yasg
 flake8

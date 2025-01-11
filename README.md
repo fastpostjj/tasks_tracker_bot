@@ -71,3 +71,10 @@
    - либо одной командой:
 
     celery -A config.celery worker --beat --loglevel=info -D
+
+   ## В проекте реализованы следующие команды:
+
+
+
+      - python manage.py start_bot- запуск бота
+      - python manage.py csu - создание пользователя с правами админа (логин - id 1, и пароль- 123abc123)
