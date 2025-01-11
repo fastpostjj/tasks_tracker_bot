@@ -1,6 +1,7 @@
 from django.db.models import Q
 from tasks.models import Task, Category
 from user_auth.models import User
+from tasks.services.taskexception import TaskException
 
 
 class TaskConnector():
@@ -56,10 +57,10 @@ class TaskConnector():
             user = self.create_user(chat_id)
 
         if self.is_category_exist(chat_id=chat_id, name=name):
-            return f'Категория {name} уже существует'
+            raise TaskException(f'Категория {name} уже существует')
         else:
-            Category.objects.create(user=user, name=name)
-            return f'Категория {name} создана'
+            category = Category.objects.create(user=user, name=name)
+            return category
 
     def create_task(self, **kwargs):
         chat_id = kwargs.get('chat_id')

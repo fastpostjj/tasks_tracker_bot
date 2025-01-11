@@ -108,7 +108,7 @@ class Sending_Task(models.Model):
     в телеграмм по заданному ими расписанию.
     task - задача,
     time_for_send - время рассылки задачи,
-    day_start - дата начала рассылки,
+    day_start_sending - дата начала рассылки,
     period - периодичность рассылки задачи,
     status - статус рассылки,
     last_send - дата и время последней отправки
@@ -122,10 +122,10 @@ class Sending_Task(models.Model):
         verbose_name="Время рассылки задачи",
         **NULLABLE,
     )
-    # day_start = models.DateField(
-    #     verbose_name="Дата начала рассылки задачи",
-    #     **NULLABLE,
-    # )
+    day_start_sending = models.DateField(
+        verbose_name="Дата начала рассылки задачи",
+        **NULLABLE,
+    )
     period = models.CharField(
         max_length=19,
         choices=PERIOD,
@@ -145,10 +145,10 @@ class Sending_Task(models.Model):
         **NULLABLE,
     )
 
-    # last_send = models.DateTimeField(
-    #     verbose_name="Дата и время последней отправки",
-    #     **NULLABLE,
-    # )
+    last_send = models.DateTimeField(
+        verbose_name="Дата и время последней отправки",
+        **NULLABLE,
+    )
 
     class Meta:
         verbose_name = 'рассылка'

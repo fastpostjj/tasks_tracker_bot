@@ -38,6 +38,7 @@ class MyStates(StatesGroup):
     annotation = State()
     category = State()
     create_category = State()
+    create_new_category = State()
     category_list = State()
     task_list = State()
     time = State()
@@ -203,7 +204,6 @@ def period_markup():
     for period in PERIOD:
         button = InlineKeyboardButton(
                 period[1],
-                # callback_data=f'period_{period[0]}'
                 callback_data=f'{period[0]}'
                 )
         buttons.append(button)
@@ -254,31 +254,58 @@ def handle_create_task(call: types.CallbackQuery, state: StateContext):
 
 @bot.callback_query_handler(func=lambda call: call.data == "my_tasks")
 def get_my_tasks(call: types.CallbackQuery, state: StateContext):
-    msg = "Ваши задачи:\n"
     tasks = TaskConnector().get_user_tasks(call.message.chat.id)
-    for task in tasks:
-        msg += task['name']
-        if 'annotation' in task and task['annotation']:
-            msg += "*Описание:* " + task['annotation']
-        status = dict(STATUS).get(task['status'])
-        msg += " *Статус:* " + status + "\n"
-    bot.send_message(call.message.chat.id, msg)
+    if tasks:
+        msg = "Ваши задачи:\n"
+        for task in tasks:
+            msg += task['name']
+            if 'annotation' in task and task['annotation']:
+                msg += " *Описание: * " + task['annotation']
+            status = dict(STATUS).get(task['status'])
+            msg += " *Статус: * " + status + "\n"
+    else:
+        msg = "У вас пока нет задач."
+
+    bot.send_message(call.message.chat.id, escape_markdown(msg))
     # Удаляем сообщение с кнопками после нажатия
     # bot.delete_message(call.message.chat.id, call.message.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "create_category")
 def handle_create_category(call: types.CallbackQuery, state: StateContext):
-    state.set(MyStates.create_category)
-    bot.send_message(call.message.chat.id, "Напишите название категории")
+    state.set(MyStates.create_new_category)
     # Удаляем сообщение с кнопками после нажатия
     bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, "Напишите название категории")
+
+
+@bot.message_handler(state=MyStates.create_new_category)
+def create_category(message: types.Message, state: StateContext):
+    name = message.text
+    try:
+        category = TaskConnector().create_category(
+            chat_id=message.chat.id,
+            name=name,
+        )
+        msg = (
+            f"Создана категория: *{category.name}*\n"
+        )
+    except Exception as e:
+        msg = f"Ошибка при создании категориии {e}"
+    bot.send_message(
+        message.chat.id, msg,
+        reply_parameters=ReplyParameters(message_id=message.message_id),
+    )
+    state.delete()
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "my_categories")
 def get_my_categories(call: types.CallbackQuery, state: StateContext):
+    # Удаляем сообщение с кнопками после нажатия
+    bot.delete_message(call.message.chat.id, call.message.message_id)
     msg = "Ваши категории:\n"
     categories = TaskConnector().get_user_categories(call.message.chat.id)
+    # if categories:
     bot.send_message(
         call.message.chat.id,
         msg,
@@ -287,8 +314,11 @@ def get_my_categories(call: types.CallbackQuery, state: StateContext):
             status='list'
         )
         )
-    # Удаляем сообщение с кнопками после нажатия
-    # bot.delete_message(call.message.chat.id, call.message.message_id)
+    # else:
+    #     bot.send_message(
+    #         call.message.chat.id,
+    #         "У вас пока нет категорий"
+    #     )
 
 
 # @bot.message_handler(state="*", commands=["cancel"])
@@ -309,7 +339,6 @@ def task_get(message: types.Message, state: StateContext):
 
 @bot.message_handler(state=MyStates.create_category)
 def task_category(message: types.Message, state: StateContext):
-    # state.set(MyStates.annotation)
     categories = TaskConnector().get_user_categories(message.chat.id)
     state.add_data(annotation=message.text)
     if categories:
@@ -325,7 +354,6 @@ def task_category(message: types.Message, state: StateContext):
             "У вас пока нет категорий.  Задача будет создана без категории.",
             reply_parameters=ReplyParameters(message_id=message.message_id),
         )
-        # create_task(message, state, None)
     state.set(MyStates.period)
 
 
@@ -338,8 +366,6 @@ def handle_category_selection(call: types.CallbackQuery, state: StateContext):
         category_id = None
     state.add_data(category=category_id)
 
-    # message = call.message
-    # create_task(message, state, category_id)
     bot.send_message(
         call.message.chat.id,
         "Создать задачу?",
@@ -482,7 +508,6 @@ def create_task(message: types.Message, state: StateContext, task, annotation, c
 def task_creation(call: types.CallbackQuery, state: StateContext):
 # @bot.message_handler(state=MyStates.create_finished)
 # def create_task_finished(message: types.Message, state: StateContext):
-    print("call.data=", call.data)
     msg = ""
     if call.data == "create_task_yes":
         with state.data() as data:
@@ -509,25 +534,6 @@ def task_creation(call: types.CallbackQuery, state: StateContext):
         )
     state.delete()
 
-
-@bot.message_handler(state=MyStates.create_category)
-def create_category(message: types.Message, state: StateContext):
-    name = message.text
-    try:
-        category = TaskConnector().create_category(
-            chat_id=message.chat.id,
-            name=name,
-        )
-        msg = (
-            f"Создана категория: *{name}*\n"
-        )
-    except Exception as e:
-        msg = f"Ошибка при создании категориии {e}"
-    bot.send_message(
-        message.chat.id, msg,
-        reply_parameters=ReplyParameters(message_id=message.message_id),
-    )
-    state.delete()
 
 # @bot.message_handler(state=MyStates.period)
 # def finish(message: types.Message, state: StateContext):

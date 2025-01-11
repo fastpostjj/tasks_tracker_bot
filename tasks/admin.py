@@ -71,7 +71,9 @@ class Sending_TaskAdmin(admin.ModelAdmin):
         'task',
         'time_for_send',
         'period',
-        'status'
+        'status',
+        'day_start_sending',
+        'last_send'
     )
     fields = [
         'task',
